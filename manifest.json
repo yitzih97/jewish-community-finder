@@ -8,7 +8,10 @@
     "https://overpass-api.de/*",
     "https://maps.mail.ru/*",
     "https://overpass.kumi.systems/*",
-    "https://nominatim.openstreetmap.org/*"
+    "https://nominatim.openstreetmap.org/*",
+    "https://mikvah.org/*",
+    "https://services1.arcgis.com/*",
+    "https://tile.openstreetmap.org/*"
   ],
   "background": {
     "service_worker": "background.js"

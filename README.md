@@ -5,7 +5,16 @@ Shows every **shul**, **kosher restaurant/food store**, **Jewish school**, and
 Realtor.com, StreetEasy, Booking.com, Vrbo, Google Maps — and any other site
 via the toolbar button.
 
-Data comes from **OpenStreetMap** (free, no API key needed).
+Data sources (all free, no API key needed):
+- **Shuls & kosher food** — OpenStreetMap
+- **Jewish schools** — NCES private-school location service (every US private
+  school, filtered to Jewish schools by name), with OpenStreetMap as a
+  fallback outside the US
+- **Mikvahs** — the mikvah.org global directory (~1,160 worldwide)
+
+Hover a map pin for a quick info card; click it (or any result in the list)
+for a larger card with a location map preview and buttons to Navigate,
+open Street View, or open it in Google Maps.
 
 ## Install
 

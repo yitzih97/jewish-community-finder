@@ -233,6 +233,57 @@
     return places;
   }
 
+  // Fold mikvah.org results into the OSM place list, skipping any that sit on
+  // top of a place OSM already returned, then re-sort by distance.
+  function mergeMikvahs(places, mikvahs, bounds) {
+    const centerLat = (bounds.north + bounds.south) / 2;
+    const centerLng = (bounds.east + bounds.west) / 2;
+    const seen = new Set(
+      places.map((p) => `${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`)
+    );
+    for (const mk of mikvahs || []) {
+      const dk = `${mk.lat.toFixed(3)}|${mk.lng.toFixed(3)}`;
+      if (seen.has(dk)) continue;
+      seen.add(dk);
+      places.push({
+        ...mk,
+        distance: haversineMiles(centerLat, centerLng, mk.lat, mk.lng),
+      });
+    }
+    places.sort((a, b) => a.distance - b.distance);
+    return places;
+  }
+
+  // Fold NCES school results into the list. Dedupe against schools OSM already
+  // returned — by name (same school, slightly different coords across sources)
+  // and by location — so a school mapped in both sources appears once.
+  function normName(s) {
+    return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16);
+  }
+  function mergeSchools(places, schools, bounds) {
+    const centerLat = (bounds.north + bounds.south) / 2;
+    const centerLng = (bounds.east + bounds.west) / 2;
+    const seenName = new Set(
+      places.filter((p) => p.cat === 'school').map((p) => normName(p.name))
+    );
+    const seenCoord = new Set(
+      places.map((p) => `${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`)
+    );
+    for (const s of schools || []) {
+      const nk = normName(s.name);
+      const ck = `${s.lat.toFixed(3)}|${s.lng.toFixed(3)}`;
+      if (seenName.has(nk) || seenCoord.has(ck)) continue;
+      seenName.add(nk);
+      seenCoord.add(ck);
+      places.push({
+        ...s,
+        distance: haversineMiles(centerLat, centerLng, s.lat, s.lng),
+      });
+    }
+    places.sort((a, b) => a.distance - b.distance);
+    return places;
+  }
+
   function bboxKey(b) {
     return [b.south, b.west, b.north, b.east]
       .map((v) => v.toFixed(3)).join(',');
@@ -251,25 +302,38 @@
     state.loading = true;
     state.error = null;
     renderPanel();
-    try {
-      const res = await askBackground({
-        type: 'jcf:overpass',
-        bounds: state.bounds,
-      });
-      // Ignore stale responses if the user moved the map meanwhile.
-      if (state.lastFetchKey !== key) return;
-      state.places = processElements(res.elements, state.bounds);
-      cache.set(key, state.places);
-      if (cache.size > 20) cache.delete(cache.keys().next().value);
-    } catch (e) {
-      state.error = e.message;
+
+    const bounds = state.bounds;
+    // OSM (shuls/food/schools) and mikvah.org run in parallel and independently
+    // — if one source is down, we still show whatever the other returned.
+    const [osmRes, mkRes, schRes] = await Promise.allSettled([
+      askBackground({ type: 'jcf:overpass', bounds }),
+      askBackground({ type: 'jcf:mikvahs', bounds }),
+      askBackground({ type: 'jcf:schools', bounds }),
+    ]);
+    // Ignore stale responses if the user moved the map meanwhile.
+    if (state.lastFetchKey !== key) return;
+
+    let places = [];
+    const osmOk = osmRes.status === 'fulfilled';
+    const mkOk = mkRes.status === 'fulfilled';
+    const schOk = schRes.status === 'fulfilled';
+    if (osmOk) places = processElements(osmRes.value.elements, bounds);
+    if (mkOk) places = mergeMikvahs(places, mkRes.value.mikvahs, bounds);
+    if (schOk) places = mergeSchools(places, schRes.value.schools, bounds);
+
+    if (!osmOk && !mkOk && !schOk) {
+      state.error =
+        (osmRes.reason && osmRes.reason.message) || 'Lookup failed';
       state.places = [];
-    } finally {
-      if (state.lastFetchKey === key) {
-        state.loading = false;
-        renderAll();
-      }
+    } else {
+      state.error = null;
+      state.places = places;
+      cache.set(key, places);
+      if (cache.size > 20) cache.delete(cache.keys().next().value);
     }
+    state.loading = false;
+    renderAll();
   }
 
   async function refreshArea({ force = false } = {}) {
@@ -415,6 +479,95 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.18);
     }
     .item .name { display: flex; align-items: center; }
+
+    /* hover popup — compact card, like Google Maps' pin hover */
+    .hovercard {
+      position: fixed; z-index: 2147483004; width: 216px;
+      background: #fff; color: #1f2937; border-radius: 10px;
+      box-shadow: 0 6px 22px rgba(0,0,0,.28); overflow: hidden;
+      pointer-events: none; transform: translate(-50%, -100%);
+      margin-top: -12px; display: none;
+    }
+    .hovercard .hc-body { padding: 9px 11px; }
+    .hovercard .hc-name {
+      font-size: 13px; font-weight: 700; display: flex; align-items: center;
+      gap: 6px; line-height: 1.25;
+    }
+    .hovercard .hc-meta { font-size: 11px; color: #6b7280; margin-top: 3px; }
+    .hovercard .hc-hint {
+      font-size: 10.5px; color: #9ca3af; margin-top: 5px;
+    }
+    .hovercard .hc-badge {
+      flex: none; width: 20px; height: 20px; border-radius: 50%;
+      background: #fff; border: 1.5px solid currentColor;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .hovercard::after {
+      content: ""; position: absolute; left: 50%; bottom: -7px;
+      transform: translateX(-50%);
+      border-left: 7px solid transparent; border-right: 7px solid transparent;
+      border-top: 7px solid #fff;
+    }
+
+    /* detail modal — larger card with actions */
+    .detail-back {
+      position: fixed; inset: 0; z-index: 2147483005;
+      background: rgba(17,24,39,.45); display: none;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .detail {
+      width: 340px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px);
+      background: #fff; color: #1f2937; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4); display: flex; flex-direction: column;
+    }
+    .detail-map {
+      position: relative; height: 150px; background: #e5e7eb; flex: none;
+    }
+    .detail-map img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .detail-map .dm-spin {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 12px; color: #6b7280;
+    }
+    .detail-x {
+      position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
+      border-radius: 50%; border: none; background: rgba(255,255,255,.92);
+      color: #374151; font-size: 16px; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .detail-x:hover { background: #fff; }
+    .detail-body { padding: 14px 16px 4px; overflow-y: auto; }
+    .detail-title {
+      font-size: 18px; font-weight: 800; letter-spacing: -.01em;
+      display: flex; align-items: center; gap: 9px; line-height: 1.2;
+    }
+    .detail-badge {
+      flex: none; width: 30px; height: 30px; border-radius: 50%;
+      background: #fff; border: 2px solid currentColor;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .detail-cat { font-size: 12px; font-weight: 600; margin-top: 5px; }
+    .detail-rows { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .detail-row {
+      display: flex; gap: 9px; font-size: 13px; color: #374151;
+      align-items: flex-start;
+    }
+    .detail-row .dr-ic { flex: none; width: 16px; text-align: center; opacity: .6; }
+    .detail-row a { color: #1e3a8a; text-decoration: none; }
+    .detail-row a:hover { text-decoration: underline; }
+    .detail-actions {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      padding: 14px 16px 16px;
+    }
+    .detail-actions a {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 8px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      text-decoration: none; cursor: pointer; border: 1px solid #e5e7eb;
+      color: #1f2937; background: #f9fafb;
+    }
+    .detail-actions a:hover { background: #f3f4f6; }
+    .detail-actions a.primary {
+      grid-column: 1 / -1; background: #1e3a8a; color: #fff; border-color: #1e3a8a;
+    }
+    .detail-actions a.primary:hover { background: #27479e; }
   `;
 
   try {
@@ -444,6 +597,17 @@
   pinOverlay.style.display = 'none';
   shadow.appendChild(pinOverlay);
 
+  const hoverCard = document.createElement('div');
+  hoverCard.className = 'hovercard';
+  shadow.appendChild(hoverCard);
+
+  const detailBack = document.createElement('div');
+  detailBack.className = 'detail-back';
+  shadow.appendChild(detailBack);
+  detailBack.addEventListener('click', (e) => {
+    if (e.target === detailBack) closeDetail();
+  });
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, (c) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -455,6 +619,121 @@
       'https://www.google.com/maps/search/?api=1&query=' +
       encodeURIComponent(`${p.name} ${p.lat},${p.lng}`)
     );
+  }
+
+  function directionsUrl(p) {
+    return (
+      'https://www.google.com/maps/dir/?api=1&destination=' +
+      encodeURIComponent(`${p.lat},${p.lng}`) +
+      '&travelmode=driving'
+    );
+  }
+
+  function streetViewUrl(p) {
+    return (
+      'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' +
+      encodeURIComponent(`${p.lat},${p.lng}`)
+    );
+  }
+
+  // ------------------------------------------------------- hover + detail cards
+
+  let hoverHideTimer = null;
+  let lastPinSig = null;
+
+  function showHoverCard(p, pinEl) {
+    if (detailBack.style.display === 'flex') return;
+    clearTimeout(hoverHideTimer);
+    const c = CATS[p.cat];
+    const meta = [c.label, `${p.distance.toFixed(1)} mi away`, p.address]
+      .filter(Boolean).join(' · ');
+    hoverCard.innerHTML = `
+      <div class="hc-body">
+        <div class="hc-name" style="color:${c.color}">
+          <span class="hc-badge">${catSvg(p.cat, 12)}</span>
+          <span style="color:#111827">${esc(p.name)}</span>
+        </div>
+        <div class="hc-meta">${esc(meta)}</div>
+        <div class="hc-hint">Click for photos, directions &amp; more →</div>
+      </div>`;
+    const r = pinEl.getBoundingClientRect();
+    hoverCard.style.left = r.left + r.width / 2 + 'px';
+    hoverCard.style.top = r.top + 'px';
+    hoverCard.style.display = 'block';
+  }
+
+  function hideHoverCard(delay) {
+    clearTimeout(hoverHideTimer);
+    hoverHideTimer = setTimeout(() => {
+      hoverCard.style.display = 'none';
+    }, delay || 0);
+  }
+
+  function detailRow(icon, html) {
+    return `<div class="detail-row"><span class="dr-ic">${icon}</span>
+      <span>${html}</span></div>`;
+  }
+
+  function openDetail(p) {
+    hideHoverCard(0);
+    const c = CATS[p.cat];
+    const rows = [];
+    if (p.address) rows.push(detailRow('📍', esc(p.address)));
+    rows.push(detailRow('📏', `${p.distance.toFixed(1)} miles from map center`));
+    if (p.phone) {
+      rows.push(detailRow('📞',
+        `<a href="tel:${esc(p.phone)}">${esc(p.phone)}</a>`));
+    }
+    if (p.website) {
+      rows.push(detailRow('🔗',
+        `<a href="${esc(p.website)}" target="_blank" rel="noopener">Website ↗</a>`));
+    }
+    detailBack.innerHTML = `
+      <div class="detail" role="dialog" aria-label="${esc(p.name)}">
+        <div class="detail-map">
+          <div class="dm-spin">Loading map…</div>
+          <button class="detail-x" title="Close">✕</button>
+        </div>
+        <div class="detail-body">
+          <div class="detail-title" style="color:${c.color}">
+            <span class="detail-badge">${catSvg(p.cat, 16)}</span>
+            <span style="color:#111827">${esc(p.name)}</span>
+          </div>
+          <div class="detail-cat" style="color:${c.color}">${c.emoji} ${c.label}</div>
+          <div class="detail-rows">${rows.join('')}</div>
+        </div>
+        <div class="detail-actions">
+          <a class="primary" href="${mapsUrl(p)}" target="_blank" rel="noopener">
+            ${catSvg(p.cat, 14)} Open in Google Maps ↗</a>
+          <a href="${directionsUrl(p)}" target="_blank" rel="noopener">🧭 Navigate</a>
+          <a href="${streetViewUrl(p)}" target="_blank" rel="noopener">📷 Street View</a>
+        </div>
+      </div>`;
+    detailBack.style.display = 'flex';
+    detailBack.querySelector('.detail-x')
+      .addEventListener('click', closeDetail);
+
+    // Lazy-load the composed map preview from the background worker.
+    const mapWrap = detailBack.querySelector('.detail-map');
+    askBackground({
+      type: 'jcf:staticmap', lat: p.lat, lng: p.lng, color: c.color,
+    }).then((res) => {
+      if (detailBack.style.display !== 'flex') return;
+      const img = document.createElement('img');
+      img.alt = 'Map of ' + p.name;
+      img.src = res.dataUrl;
+      const spin = mapWrap.querySelector('.dm-spin');
+      if (spin) spin.remove();
+      mapWrap.insertBefore(img, mapWrap.firstChild);
+    }).catch(() => {
+      const spin = mapWrap.querySelector('.dm-spin');
+      if (spin) spin.textContent = 'Map preview unavailable';
+    });
+  }
+
+  function closeDetail() {
+    detailBack.style.display = 'none';
+    detailBack.innerHTML = '';
   }
 
   function visiblePlaces() {
@@ -554,7 +833,7 @@
       item.addEventListener('click', (e) => {
         if (e.target.tagName === 'A') return;
         const p = state.places.find((x) => x.id === item.dataset.id);
-        if (p) window.open(mapsUrl(p), '_blank', 'noopener');
+        if (p) openDetail(p);
       });
     });
   }
@@ -603,6 +882,17 @@
       return;
     }
     const b = state.bounds;
+    // Skip rebuilding when nothing moved — keeps pin hover from flickering on
+    // the periodic tick, and only re-renders when the map actually shifts.
+    const sig = [
+      Math.round(rect.left), Math.round(rect.top),
+      Math.round(rect.width), Math.round(rect.height),
+      bboxKey(b), visiblePlaces().length,
+      Object.values(state.enabled).join(''),
+    ].join('|');
+    if (sig === lastPinSig && pinOverlay.style.display === 'block') return;
+    lastPinSig = sig;
+
     pinOverlay.style.display = 'block';
     pinOverlay.style.left = rect.left + 'px';
     pinOverlay.style.top = rect.top + 'px';
@@ -622,9 +912,12 @@
       pin.style.top = y + '%';
       pin.style.color = CATS[p.cat].color;
       pin.innerHTML = catSvg(p.cat, 14);
-      pin.title = `${CATS[p.cat].label}: ${p.name}`;
-      pin.addEventListener('click', () =>
-        window.open(mapsUrl(p), '_blank', 'noopener'));
+      pin.addEventListener('mouseenter', () => showHoverCard(p, pin));
+      pin.addEventListener('mouseleave', () => hideHoverCard(120));
+      pin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDetail(p);
+      });
       pinOverlay.appendChild(pin);
     }
   }
