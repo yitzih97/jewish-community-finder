@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jewish Community Finder — see the shuls before you see the house</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --paper: #eef1f7;
+    --paper-raised: #ffffff;
+    --ink: #17224d;
+    --ink-soft: #4a5578;
+    --ink-faint: #8b94b3;
+    --line: #d5dae8;
+    --street: #dde2ee;
+    --street-major: #ccd3e5;
+    --accent: #2f5fd0;
+    --accent-deep: #1e3a8a;
+    --kosher: #ea580c;
+    --school: #059669;
+    --mikvah: #2196f3;
+    --btn-text: #ffffff;
+    --shadow: 0 18px 50px rgba(23, 34, 77, 0.16);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0d1430;
+      --paper-raised: #16204a;
+      --ink: #e8ecf8;
+      --ink-soft: #a8b2d4;
+      --ink-faint: #6b7699;
+      --line: #273163;
+      --street: #1b2650;
+      --street-major: #243067;
+      --accent: #7c9bef;
+      --accent-deep: #a5bbf5;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #eef1f7;
+    --paper-raised: #ffffff;
+    --ink: #17224d;
+    --ink-soft: #4a5578;
+    --ink-faint: #8b94b3;
+    --line: #d5dae8;
+    --street: #dde2ee;
+    --street-major: #ccd3e5;
+    --accent: #2f5fd0;
+    --accent-deep: #1e3a8a;
+    --shadow: 0 18px 50px rgba(23, 34, 77, 0.16);
+  }
+  :root[data-theme="dark"] {
+    --paper: #0d1430;
+    --paper-raised: #16204a;
+    --ink: #e8ecf8;
+    --ink-soft: #a8b2d4;
+    --ink-faint: #6b7699;
+    --line: #273163;
+    --street: #1b2650;
+    --street-major: #243067;
+    --accent: #7c9bef;
+    --accent-deep: #a5bbf5;
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  * { margin: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Charter, Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .sans {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0;
+  }
+  .wordmark {
+    display: flex; align-items: center; gap: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 800; font-size: 16px; letter-spacing: -0.01em;
+  }
+  .wordmark .badge {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent-deep); color: #fff;
+    display: grid; place-items: center; font-size: 15px;
+    font-family: Georgia, serif;
+  }
+  :root[data-theme="dark"] .wordmark .badge,
+  html:not([data-theme="light"]) .wordmark .badge { color: #fff; }
+  header nav a {
+    color: var(--ink-soft); text-decoration: none; font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin-left: 22px;
+  }
+  header nav a:hover { color: var(--accent); }
+
+  /* ---------- hero ---------- */
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 48px; align-items: center; padding: 44px 0 72px;
+  }
+  .eyebrow {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: clamp(34px, 4.6vw, 50px); font-weight: 800;
+    letter-spacing: -0.025em; line-height: 1.06; text-wrap: balance;
+    margin: 14px 0 18px;
+  }
+  .lede { color: var(--ink-soft); max-width: 30em; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .cta-row { display: flex; align-items: center; gap: 18px; margin-top: 30px; flex-wrap: wrap; }
+  .btn {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent-deep); color: var(--btn-text);
+    font-weight: 700; font-size: 16px; text-decoration: none;
+    padding: 14px 26px; border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(30, 58, 138, 0.35);
+    transition: transform 0.12s ease;
+  }
+  :root[data-theme="dark"] .btn { color: #0d1430; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .btn { color: #0d1430; } }
+  .btn:hover { transform: translateY(-2px); }
+  .cta-meta {
+    font-size: 13.5px; color: var(--ink-faint);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* ---------- map demo ---------- */
+  .mapcard {
+    position: relative; border-radius: 16px; overflow: hidden;
+    background: var(--paper-raised); box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    aspect-ratio: 6 / 5; min-height: 340px;
+  }
+  .mapcard svg.streets { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pin {
+    position: absolute; width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    transform: translate(-50%, -50%);
+  }
+  .pin svg { width: 14px; height: 14px; fill: currentColor; }
+  .pin::after {
+    content: ""; position: absolute; inset: -8px; border-radius: 50%;
+    border: 2px solid currentColor; opacity: 0;
+    animation: ping 2.6s ease-out infinite;
+  }
+  .cbadge {
+    flex: none; width: 32px; height: 32px; border-radius: 50%;
+    background: #fff; border: 2px solid currentColor;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-right: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+  }
+  .cbadge svg { width: 17px; height: 17px; fill: currentColor; }
+  .mp-icon {
+    flex: none; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; border: 1.5px solid currentColor;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  }
+  .mp-icon svg { width: 11px; height: 11px; fill: currentColor; }
+  @keyframes ping {
+    0% { transform: scale(0.4); opacity: 0.8; }
+    70%, 100% { transform: scale(1.4); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pin::after { animation: none; }
+  }
+  .minipanel {
+    position: absolute; right: 14px; top: 14px; width: 232px;
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: var(--shadow); overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .minipanel .mp-hdr {
+    background: var(--accent-deep); color: #fff; font-weight: 700;
+    font-size: 12px; padding: 8px 12px; display: flex; gap: 6px; align-items: center;
+  }
+  :root[data-theme="dark"] .minipanel .mp-hdr { color: #0d1430; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .minipanel .mp-hdr { color: #0d1430; } }
+  .mp-item {
+    padding: 8px 12px; border-top: 1px solid var(--line);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .mp-item .n { font-size: 12.5px; font-weight: 600; }
+  .mp-item .d { font-size: 11px; color: var(--ink-faint); }
+  .fab {
+    position: absolute; bottom: 14px; right: 14px;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--accent-deep); color: #fff;
+    display: grid; place-items: center; font-size: 19px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35); font-family: Georgia, serif;
+  }
+  :root[data-theme="dark"] .fab { color: #0d1430; }
+  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .fab { color: #0d1430; } }
+  .maptag {
+    position: absolute; left: 14px; bottom: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 11px; color: var(--ink-faint);
+    background: var(--paper-raised); border: 1px solid var(--line);
+    padding: 4px 10px; border-radius: 999px;
+  }
+
+  /* ---------- sections ---------- */
+  section { padding: 58px 0; border-top: 1px solid var(--line); }
+  .sec-title {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 10px; text-wrap: balance;
+  }
+  .sec-sub { color: var(--ink-soft); max-width: 38em; }
+
+  .cats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px; margin-top: 30px;
+  }
+  .cat {
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px;
+  }
+  .cat h3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15.5px; font-weight: 700; display: flex; align-items: center;
+    margin-bottom: 6px;
+  }
+  .cat p { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
+
+  .steps { counter-reset: step; margin-top: 34px; display: grid; gap: 0; }
+  .step {
+    display: grid; grid-template-columns: 52px 1fr; gap: 18px;
+    padding: 20px 0; border-top: 1px dashed var(--line);
+  }
+  .step:first-child { border-top: none; padding-top: 0; }
+  .step .num {
+    counter-increment: step;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 2px solid var(--accent); color: var(--accent);
+    display: grid; place-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 800; font-size: 16px;
+  }
+  .step .num::before { content: counter(step); }
+  .step h3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px; font-weight: 700; margin-bottom: 4px;
+  }
+  .step p { color: var(--ink-soft); font-size: 15.5px; }
+  kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em; background: var(--street);
+    border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 6px; padding: 1px 7px; white-space: nowrap;
+  }
+
+  .sites {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .site {
+    border: 1px solid var(--line); background: var(--paper-raised);
+    border-radius: 999px; padding: 7px 16px; font-size: 14px; font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .site.more { border-style: dashed; font-weight: 400; color: var(--ink-faint); }
+
+  .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 30px; }
+  .note {
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 12px; padding: 20px;
+  }
+  .note h3 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+  }
+  .note p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.55; }
+
+  footer {
+    border-top: 1px solid var(--line); padding: 30px 0 46px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  footer a { color: var(--ink-soft); }
+
+  a.btn:focus-visible, header nav a:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 3px;
+  }
+
+  @media (max-width: 780px) {
+    .hero { grid-template-columns: 1fr; gap: 34px; padding-top: 20px; }
+    .minipanel { width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-shul" viewBox="0 0 24 24">
+      <path d="M12 2.2 22.5 10H1.5Z"></path>
+      <rect x="3.5" y="10" width="17" height="11.8"></rect>
+      <path d="M9.3 21.8v-4.4a2.7 2.7 0 0 1 5.4 0v4.4Z" fill="#fff"></path>
+      <g fill="none" stroke="#fff" stroke-width="1.1">
+        <path d="M12 4.2 14.2 8H9.8Z"></path>
+        <path d="M12 9.6 9.8 5.8h4.4Z"></path>
+      </g>
+    </symbol>
+    <symbol id="i-kosher" viewBox="0 0 24 24">
+      <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"></path>
+    </symbol>
+    <symbol id="i-school" viewBox="0 0 24 24">
+      <rect x="11.3" y="1" width="1.4" height="3.4"></rect>
+      <rect x="12.7" y="1.3" width="4.3" height="2.3"></rect>
+      <path d="M12 3.9 17.2 8.6H6.8Z"></path>
+      <rect x="8" y="8.6" width="8" height="12.9"></rect>
+      <rect x="1.5" y="12.2" width="6.5" height="9.3"></rect>
+      <rect x="16" y="12.2" width="6.5" height="9.3"></rect>
+      <g fill="#fff">
+        <circle cx="12" cy="11.2" r="1.4"></circle>
+        <rect x="10.7" y="16.2" width="2.6" height="5.3"></rect>
+        <rect x="3" y="14.2" width="1.7" height="2"></rect>
+        <rect x="5.6" y="14.2" width="1.7" height="2"></rect>
+        <rect x="16.9" y="14.2" width="1.7" height="2"></rect>
+        <rect x="19.5" y="14.2" width="1.7" height="2"></rect>
+      </g>
+    </symbol>
+    <symbol id="i-mikvah" viewBox="0 0 24 24">
+      <path d="M12 1.8c2.9 3.9 4.7 6.2 4.7 8.5a4.7 4.7 0 0 1-9.4 0C7.3 8 9.1 5.7 12 1.8Z"></path>
+      <circle cx="10.2" cy="9.6" r="1" fill="#fff"></circle>
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M2.6 18.1q2.35-1.9 4.7 0t4.7 0t4.7 0t4.7 0"></path>
+        <path d="M2.6 21.3q2.35-1.9 4.7 0t4.7 0t4.7 0t4.7 0"></path>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="wordmark"><span class="badge">✡</span> Jewish Community Finder</div>
+    <nav>
+      <a href="#install">How to install</a>
+      <a href="#data">Data &amp; privacy</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Free Chrome extension</div>
+      <h1>See the shuls before you see the house.</h1>
+      <p class="lede">You're browsing a listing on Zillow or an Airbnb for Shabbos.
+        The map shows you the price and the square footage — but not whether you can
+        <strong>walk to a minyan</strong>. This extension overlays every shul, kosher
+        restaurant, Jewish school, and mikvah onto the map you're already looking at.</p>
+      <div class="cta-row">
+        <a class="btn" download="jewish-community-finder.zip" href="jewish-community-finder.zip" download="jewish-community-finder.zip">⬇&#xFE0E;&nbsp; Download the extension</a>
+        <span class="cta-meta">v1.0 · 14 KB · no account, no API keys</span>
+      </div>
+    </div>
+
+    <div class="mapcard" role="img" aria-label="Illustration: a street map with colored pins for shuls, kosher food, schools, and a mikvah, next to the extension's results panel">
+      <svg class="streets" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g stroke="var(--street)" stroke-width="6">
+          <line x1="0" y1="80" x2="600" y2="60"></line>
+          <line x1="0" y1="180" x2="600" y2="165"></line>
+          <line x1="0" y1="290" x2="600" y2="280"></line>
+          <line x1="0" y1="400" x2="600" y2="395"></line>
+          <line x1="90" y1="0" x2="110" y2="500"></line>
+          <line x1="230" y1="0" x2="240" y2="500"></line>
+          <line x1="380" y1="0" x2="370" y2="500"></line>
+          <line x1="510" y1="0" x2="520" y2="500"></line>
+        </g>
+        <g stroke="var(--street-major)" stroke-width="12">
+          <line x1="0" y1="235" x2="600" y2="222"></line>
+          <line x1="305" y1="0" x2="300" y2="500"></line>
+        </g>
+      </svg>
+      <span class="pin" style="left:22%; top:33%; color:#b8860b;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
+      <span class="pin" style="left:47%; top:62%; color:#b8860b;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
+      <span class="pin" style="left:35%; top:80%; color:#ea580c;" title="Kosher restaurant"><svg><use href="#i-kosher"></use></svg></span>
+      <span class="pin" style="left:58%; top:28%; color:#ea580c;" title="Kosher grocery"><svg><use href="#i-kosher"></use></svg></span>
+      <span class="pin" style="left:16%; top:64%; color:#059669;" title="Jewish school"><svg><use href="#i-school"></use></svg></span>
+      <span class="pin" style="left:64%; top:76%; color:#2196f3;" title="Mikvah"><svg><use href="#i-mikvah"></use></svg></span>
+      <div class="minipanel" aria-hidden="true">
+        <div class="mp-hdr">✡ Jewish Community Finder</div>
+        <div class="mp-item"><span class="mp-icon" style="color:#b8860b"><svg><use href="#i-shul"></use></svg></span><div><div class="n">Cong. Ohr Yisroel</div><div class="d">Shul · 0.3 mi</div></div></div>
+        <div class="mp-item"><span class="mp-icon" style="color:#ea580c"><svg><use href="#i-kosher"></use></svg></span><div><div class="n">Grill &amp; Glatt</div><div class="d">Kosher food · 0.5 mi</div></div></div>
+        <div class="mp-item"><span class="mp-icon" style="color:#059669"><svg><use href="#i-school"></use></svg></span><div><div class="n">Bais Yaakov Elementary</div><div class="d">Jewish school · 0.7 mi</div></div></div>
+        <div class="mp-item"><span class="mp-icon" style="color:#2196f3"><svg><use href="#i-mikvah"></use></svg></span><div><div class="n">Community Mikvah</div><div class="d">Mikvah · 0.9 mi</div></div></div>
+      </div>
+      <span class="fab" aria-hidden="true">✡</span>
+      <span class="maptag">Works right on Zillow &amp; Airbnb maps</span>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="sec-title">Four things every frum family checks first</h2>
+    <p class="sec-sub">Pan or zoom any supported map and the extension searches that exact
+      area, lists everything by distance, and drops color-coded pins on the map itself.</p>
+    <div class="cats">
+      <div class="cat"><h3><span class="cbadge" style="color:#b8860b"><svg><use href="#i-shul"></use></svg></span>Shuls</h3>
+        <p>Every synagogue mapped in the area — click any result to open it in Google Maps.</p></div>
+      <div class="cat"><h3><span class="cbadge" style="color:#ea580c"><svg><use href="#i-kosher"></use></svg></span>Kosher food</h3>
+        <p>Restaurants, takeout, bakeries, and groceries tagged kosher or carrying a kosher name.</p></div>
+      <div class="cat"><h3><span class="cbadge" style="color:#059669"><svg><use href="#i-school"></use></svg></span>Jewish schools</h3>
+        <p>Yeshivos, day schools, and Bais Yaakovs — from preschool through beis medrash.</p></div>
+      <div class="cat"><h3><span class="cbadge" style="color:#2196f3"><svg><use href="#i-mikvah"></use></svg></span>Mikvahs</h3>
+        <p>Community mikvahs mapped in the neighborhood, with website and phone when listed.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2 class="sec-title">Install in about a minute</h2>
+    <p class="sec-sub">It's not on the Chrome Web Store yet, so Chrome loads it as an
+      "unpacked" extension — a one-time, four-step setup.</p>
+    <div class="steps">
+      <div class="step"><span class="num" aria-hidden="true"></span><div>
+        <h3>Download and unzip</h3>
+        <p>Use the download button above, then double-click the ZIP. Keep the
+          <kbd>jewish-community-finder</kbd> folder somewhere permanent — Chrome reads it from disk.</p>
+      </div></div>
+      <div class="step"><span class="num" aria-hidden="true"></span><div>
+        <h3>Open Chrome's extensions page</h3>
+        <p>Type <kbd>chrome://extensions</kbd> in the address bar and switch on
+          <strong>Developer mode</strong> (top-right toggle).</p>
+      </div></div>
+      <div class="step"><span class="num" aria-hidden="true"></span><div>
+        <h3>Load the folder</h3>
+        <p>Click <strong>Load unpacked</strong> and select the unzipped
+          <kbd>jewish-community-finder</kbd> folder. The ✡ icon appears in your toolbar.</p>
+      </div></div>
+      <div class="step"><span class="num" aria-hidden="true"></span><div>
+        <h3>Browse a map</h3>
+        <p>Open Zillow or Airbnb and click the round ✡ button in the bottom-right corner of
+          the page. On any other website, click the extension's toolbar icon instead.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec-title">Works where you're already looking</h2>
+    <p class="sec-sub">The ✡ button appears automatically on these sites. Everywhere else,
+      the toolbar icon opens the same panel with a search box.</p>
+    <div class="sites">
+      <span class="site">Zillow</span><span class="site">Airbnb</span>
+      <span class="site">Trulia</span><span class="site">Redfin</span>
+      <span class="site">Realtor.com</span><span class="site">StreetEasy</span>
+      <span class="site">Apartments.com</span><span class="site">Booking.com</span>
+      <span class="site">Vrbo</span><span class="site">Google Maps</span>
+      <span class="site more">+ any site via the toolbar icon</span>
+    </div>
+  </section>
+
+  <section id="data">
+    <h2 class="sec-title">Data &amp; privacy</h2>
+    <div class="notes">
+      <div class="note"><h3>Where the data comes from</h3>
+        <p>Locations come from OpenStreetMap, the free community-built world map. Coverage is
+          strong in most established Jewish communities, but a place missing from the map means
+          it isn't mapped yet — not that it doesn't exist.</p></div>
+      <div class="note"><h3>Verify kashrus yourself</h3>
+        <p>Map data says nothing about hashgacha. Always confirm certification, minyan times,
+          and mikvah hours with the local vaad or the establishment itself.</p></div>
+      <div class="note"><h3>Nothing is tracked</h3>
+        <p>The extension talks only to OpenStreetMap servers to fetch places and look up area
+          names. No analytics, no account, and your browsing never goes anywhere else.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Jewish Community Finder · free &amp; open source</span>
+    <span>Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</span>
+  </footer>
+</div>
+</body>
+</html>
