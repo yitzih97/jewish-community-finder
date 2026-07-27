@@ -89,13 +89,10 @@
     font-weight: 800; font-size: 16px; letter-spacing: -0.01em;
   }
   .wordmark .badge {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--accent-deep); color: #fff;
-    display: grid; place-items: center; font-size: 15px;
-    font-family: Georgia, serif;
+    width: 30px; height: 30px; flex: none;
+    display: inline-flex; align-items: center;
   }
-  :root[data-theme="dark"] .wordmark .badge,
-  html:not([data-theme="light"]) .wordmark .badge { color: #fff; }
+  .wordmark .badge svg { width: 30px; height: 30px; display: block; }
   header nav a {
     color: var(--ink-soft); text-decoration: none; font-size: 14px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -134,10 +131,13 @@
   :root[data-theme="dark"] .btn { color: #0d1430; }
   @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .btn { color: #0d1430; } }
   .btn:hover { transform: translateY(-2px); }
+  .btn .btn-logo { width: 22px; height: 22px; flex: none; display: block; }
   .cta-meta {
     font-size: 13.5px; color: var(--ink-faint);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
+  .cta-meta a { color: var(--accent); text-decoration: none; }
+  .cta-meta a:hover { text-decoration: underline; }
 
   /* ---------- map demo ---------- */
   .mapcard {
@@ -174,6 +174,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.18);
   }
   .mp-icon svg { width: 11px; height: 11px; fill: currentColor; }
+  .mp-hdr .mp-star { width: 13px; height: 13px; fill: currentColor; flex: none; }
   @keyframes ping {
     0% { transform: scale(0.4); opacity: 0.8; }
     70%, 100% { transform: scale(1.4); opacity: 0; }
@@ -202,12 +203,9 @@
   .fab {
     position: absolute; bottom: 14px; right: 14px;
     width: 42px; height: 42px; border-radius: 50%;
-    background: var(--accent-deep); color: #fff;
-    display: grid; place-items: center; font-size: 19px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35); font-family: Georgia, serif;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
   }
-  :root[data-theme="dark"] .fab { color: #0d1430; }
-  @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .fab { color: #0d1430; } }
+  .fab svg { width: 42px; height: 42px; display: block; }
   .maptag {
     position: absolute; left: 14px; bottom: 14px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -348,12 +346,21 @@
         <path d="M2.6 21.3q2.35-1.9 4.7 0t4.7 0t4.7 0t4.7 0"></path>
       </g>
     </symbol>
+    <symbol id="i-logo" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="12" fill="#1e3a8a"></circle>
+      <path d="M12 4.5 18.5 15.75H5.5Z" fill="#fff"></path>
+      <path d="M12 19.5 5.5 8.25H18.5Z" fill="#fff"></path>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="M12 4.5 18.5 15.75H5.5Z"></path>
+      <path d="M12 19.5 5.5 8.25H18.5Z"></path>
+    </symbol>
   </defs>
 </svg>
 
 <div class="wrap">
   <header>
-    <div class="wordmark"><span class="badge">✡</span> Jewish Community Finder</div>
+    <div class="wordmark"><span class="badge"><svg><use href="#i-logo"></use></svg></span> Jewish Community Finder</div>
     <nav>
       <a href="#install">How to install</a>
       <a href="#data">Data &amp; privacy</a>
@@ -369,8 +376,10 @@
         <strong>walk to a minyan</strong>. This extension overlays every shul, kosher
         restaurant, Jewish school, and mikvah onto the map you're already looking at.</p>
       <div class="cta-row">
-        <a class="btn" download="jewish-community-finder.zip" href="jewish-community-finder.zip" download="jewish-community-finder.zip">⬇&#xFE0E;&nbsp; Download the extension</a>
-        <span class="cta-meta">v1.0.1 · 15 KB · no account, no API keys</span>
+        <a class="btn" href="https://chromewebstore.google.com/detail/nlehebgljnecmjeedmdgjaojehajnknf" target="_blank" rel="noopener">
+          <svg class="btn-logo" aria-hidden="true"><use href="#i-logo"></use></svg>Install Extension</a>
+        <span class="cta-meta">Free · no account, no API keys ·
+          <a href="https://yitzih97.github.io/jewish-community-finder/jewish-community-finder.zip">install manually</a></span>
       </div>
     </div>
 
@@ -398,13 +407,13 @@
       <span class="pin" style="left:16%; top:64%; color:#059669;" title="Jewish school"><svg><use href="#i-school"></use></svg></span>
       <span class="pin" style="left:64%; top:76%; color:#2196f3;" title="Mikvah"><svg><use href="#i-mikvah"></use></svg></span>
       <div class="minipanel" aria-hidden="true">
-        <div class="mp-hdr">✡ Jewish Community Finder</div>
+        <div class="mp-hdr"><svg class="mp-star"><use href="#i-star"></use></svg> Jewish Community Finder</div>
         <div class="mp-item"><span class="mp-icon" style="color:#b8860b"><svg><use href="#i-shul"></use></svg></span><div><div class="n">Cong. Ohr Yisroel</div><div class="d">Shul · 0.3 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#ea580c"><svg><use href="#i-kosher"></use></svg></span><div><div class="n">Grill &amp; Glatt</div><div class="d">Kosher food · 0.5 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#059669"><svg><use href="#i-school"></use></svg></span><div><div class="n">Bais Yaakov Elementary</div><div class="d">Jewish school · 0.7 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#2196f3"><svg><use href="#i-mikvah"></use></svg></span><div><div class="n">Community Mikvah</div><div class="d">Mikvah · 0.9 mi</div></div></div>
       </div>
-      <span class="fab" aria-hidden="true">✡</span>
+      <span class="fab" aria-hidden="true"><svg><use href="#i-logo"></use></svg></span>
       <span class="maptag">Works right on Zillow &amp; Airbnb maps</span>
     </div>
   </div>
