@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.2 — 2026-08-02
+- **New "Chabad" category.** Finds Chabad houses / Chabad centers near you
+  (gold home icon). Chabad locations are split out from the Shuls list.
+- **Shul icon is now the Star of David** (our logo), in navy.
+- **All logo marks unified** to the app icon — the panel header, the
+  bottom-right button, and the toolbar icon now use the same navy
+  Star-of-David roundel.
+- **Fixed the panel getting stuck on "Searching the area…"** — every data
+  source now has a hard timeout, so a slow or unreachable source can no longer
+  hang the whole panel. It now resolves to results (or "Nothing found") every
+  time. (Note: in places with no Jewish community, an empty result is correct.)
+
 ## 1.0.1 — 2026-07-24
 - **Mikvahs now work.** Added the mikvah.org global directory (~1,160 mikvahs
   worldwide) as the mikvah source — OpenStreetMap had almost none.

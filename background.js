@@ -8,12 +8,22 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
 ];
 
+// fetch with a hard timeout so a stalled host can never hang the panel.
+function fetchT(url, opts = {}, ms = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() =>
+    clearTimeout(timer)
+  );
+}
+
 function buildQuery(b) {
   const bbox = `${b.south},${b.west},${b.north},${b.east}`;
   return `[out:json][timeout:30];
 (
   nwr["amenity"="place_of_worship"]["religion"="jewish"](${bbox});
   nwr["building"="synagogue"](${bbox});
+  nwr["name"~"chabad|lubavitch",i](${bbox});
   nwr["amenity"~"^(mikveh|mikvah)$"](${bbox});
   nwr["diet:kosher"~"^(yes|only|limited)$"](${bbox});
   nwr["cuisine"~"kosher",i](${bbox});
@@ -30,11 +40,11 @@ async function fetchOverpass(bounds) {
   let lastErr = null;
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetchT(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'data=' + encodeURIComponent(query),
-      });
+      }, 25000);
       if (!res.ok) throw new Error('Overpass HTTP ' + res.status);
       const json = await res.json();
       return { elements: json.elements || [] };
@@ -56,9 +66,9 @@ async function loadMikvahDirectory() {
   if (mikvahCache.data && Date.now() - mikvahCache.ts < MIKVAH_TTL) {
     return mikvahCache.data;
   }
-  const res = await fetch(MIKVAH_URL, {
+  const res = await fetchT(MIKVAH_URL, {
     headers: { 'Accept': 'text/html' },
-  });
+  }, 20000);
   if (!res.ok) throw new Error('mikvah.org HTTP ' + res.status);
   const html = await res.text();
   const m = html.match(/var\s+mikvaos\s*=\s*(\[[\s\S]*?\]);/);
@@ -118,7 +128,7 @@ async function fetchSchools(b) {
     returnGeometry: 'false',
     f: 'json',
   });
-  const res = await fetch(NCES_SCHOOLS_URL + '?' + params.toString());
+  const res = await fetchT(NCES_SCHOOLS_URL + '?' + params.toString(), {}, 15000);
   if (!res.ok) throw new Error('NCES HTTP ' + res.status);
   const json = await res.json();
   const feats = json.features || [];
@@ -172,8 +182,9 @@ async function makeStaticMap({ lat, lng, color }) {
       if (ty < 0 || ty >= n) continue;
       const wrapX = ((tx % n) + n) % n;
       try {
-        const r = await fetch(
-          `https://tile.openstreetmap.org/${zoom}/${wrapX}/${ty}.png`
+        const r = await fetchT(
+          `https://tile.openstreetmap.org/${zoom}/${wrapX}/${ty}.png`,
+          {}, 8000
         );
         if (!r.ok) continue;
         const bmp = await createImageBitmap(await r.blob());
@@ -208,7 +219,7 @@ async function geocode(q) {
   const url =
     'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
     encodeURIComponent(q);
-  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const res = await fetchT(url, { headers: { 'Accept-Language': 'en' } }, 12000);
   if (!res.ok) throw new Error('Geocoder HTTP ' + res.status);
   const json = await res.json();
   if (!json.length) throw new Error('No results for "' + q + '"');

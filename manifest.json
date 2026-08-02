@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Jewish Community Finder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "See every shul, kosher restaurant, Jewish school, and mikvah in the map area you're browsing on Zillow, Airbnb, and other map sites.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu+cejhAygGybbq1n2SMP98ZtCjQgM4U0HVFLHL/hkn5dlpiP/KiYiSpiZldVNGaoMUquF7YKrMV6LpaR4qUr2ssQ58xiEACsWBO87bbqz9vKG7xQlfddXqwG9fvoxRbhoZNcwjVcy8cnuYNNbQf3BbmpFDOCrDDV/PAV+qK8XS5G1jhvATqFtBn7shtvtFGhKfPrul7QP1jvlbIPWLZ7s5g1/YkG+U2TkRqCwqZFGWi/ShwB1xsO/DJf9rIhrT9ynpDd4t+FMr2nNSqnER+cT8ia8GbBextx6VzSG0/crzjC2iegcmDl18lnWBQgs0FTraWS7HfWrbfFGKJG/I9w+QIDAQAB",
   "permissions": ["activeTab", "scripting"],

@@ -9,21 +9,22 @@
   // ---------------------------------------------------------------- config
 
   const CATS = {
-    shul: { label: 'Shuls', emoji: '✡️', color: '#b8860b' },
+    shul: { label: 'Shuls', emoji: '✡️', color: '#1e3a8a' },
+    chabad: { label: 'Chabad', emoji: '🏠', color: '#b8860b' },
     kosher: { label: 'Kosher Food', emoji: '🍽️', color: '#ea580c' },
     school: { label: 'Jewish Schools', emoji: '🎓', color: '#059669' },
     mikvah: { label: 'Mikvahs', emoji: '💧', color: '#2196f3' },
   };
 
+  // The app's mark: a solid Star of David. Used as the shul icon and, on white,
+  // as the panel/fab/toolbar logo.
+  const STAR_PATHS =
+    '<path d="M12 4.5 18.5 15.75H5.5Z"/><path d="M12 19.5 5.5 8.25H18.5Z"/>';
+
   // Category glyphs (24×24 viewBox, fill = currentColor, white cutouts).
   const ICONS = {
-    shul:
-      '<path d="M12 2.2 22.5 10H1.5Z"/>' +
-      '<rect x="3.5" y="10" width="17" height="11.8"/>' +
-      '<path d="M9.3 21.8v-4.4a2.7 2.7 0 0 1 5.4 0v4.4Z" fill="#fff"/>' +
-      '<g fill="none" stroke="#fff" stroke-width="1.1">' +
-      '<path d="M12 4.2 14.2 8H9.8Z"/>' +
-      '<path d="M12 9.6 9.8 5.8h4.4Z"/></g>',
+    shul: STAR_PATHS,
+    chabad: '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>',
     kosher:
       '<path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5' +
       'v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/>',
@@ -56,13 +57,29 @@
     );
   }
 
+  // Full roundel (navy disc + white star) for the floating button; on the
+  // navy panel header we show just the white star.
+  function logoRoundel(size) {
+    return (
+      `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">` +
+      `<circle cx="12" cy="12" r="12" fill="#1e3a8a"/>` +
+      `<g fill="#fff">${STAR_PATHS}</g></svg>`
+    );
+  }
+  function starSvg(size, color) {
+    return (
+      `<svg viewBox="0 0 24 24" width="${size}" height="${size}"` +
+      ` fill="${color}" aria-hidden="true">${STAR_PATHS}</svg>`
+    );
+  }
+
   const state = {
     open: false,
     bounds: null, // {south, west, north, east}
     boundsSource: null, // 'map' | 'geocode'
     areaLabel: '',
     places: [],
-    enabled: { shul: true, kosher: true, school: true, mikvah: true },
+    enabled: { shul: true, chabad: true, kosher: true, school: true, mikvah: true },
     loading: false,
     error: null,
     lastHref: location.href,
@@ -72,20 +89,32 @@
 
   // ------------------------------------------------------------- messaging
 
-  function askBackground(msg) {
+  function askBackground(msg, ms = 20000) {
     return new Promise((resolve, reject) => {
+      let done = false;
+      const finish = (fn, arg) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        fn(arg);
+      };
+      // Never let a stalled source hang the panel on "Searching…" forever.
+      const timer = setTimeout(
+        () => finish(reject, new Error('Timed out')),
+        ms
+      );
       try {
         chrome.runtime.sendMessage(msg, (res) => {
           if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
+            finish(reject, new Error(chrome.runtime.lastError.message));
           } else if (res && res.error) {
-            reject(new Error(res.error));
+            finish(reject, new Error(res.error));
           } else {
-            resolve(res);
+            finish(resolve, res);
           }
         });
       } catch (e) {
-        reject(e);
+        finish(reject, e);
       }
     });
   }
@@ -176,6 +205,11 @@
 
   function classify(tags) {
     const amenity = tags.amenity || '';
+    const name = (tags.name || '').toLowerCase();
+    // Chabad houses are shuls too — split them into their own category.
+    if (/chabad|lubavitch/.test(name) || tags.denomination === 'lubavitch') {
+      return 'chabad';
+    }
     if (amenity === 'place_of_worship' || tags.building === 'synagogue') {
       return 'shul';
     }
@@ -392,10 +426,12 @@
     .fab {
       position: fixed; bottom: 22px; right: 22px; z-index: 2147483000;
       width: 48px; height: 48px; border-radius: 50%; border: none;
-      background: #1e3a8a; color: #fff; font-size: 22px; cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,0,0,.35); line-height: 48px; padding: 0;
+      background: #1e3a8a; cursor: pointer; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,.35);
     }
     .fab:hover { background: #27479e; }
+    .fab svg { display: block; }
     .panel {
       position: fixed; top: 84px; right: 14px; z-index: 2147483001;
       width: 348px; max-height: calc(100vh - 130px);
@@ -582,8 +618,8 @@
 
   const fab = document.createElement('button');
   fab.className = 'fab';
-  fab.textContent = '✡';
-  fab.title = 'Show shuls, kosher food & Jewish schools in this area';
+  fab.innerHTML = starSvg(26, '#fff');
+  fab.title = 'Show shuls, Chabad, kosher food, schools & mikvahs in this area';
   fab.addEventListener('click', () => togglePanel());
   shadow.appendChild(fab);
 
@@ -794,7 +830,7 @@
 
     panel.innerHTML = `
       <div class="hdr">
-        <span>✡️</span><span class="title">Jewish Community Finder</span>
+        ${starSvg(18, '#fff')}<span class="title">Jewish Community Finder</span>
         <button data-act="close" title="Close">✕</button>
       </div>
       <div class="searchrow">
