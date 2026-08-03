@@ -311,13 +311,11 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="i-shul" viewBox="0 0 24 24">
-      <path d="M12 2.2 22.5 10H1.5Z"></path>
-      <rect x="3.5" y="10" width="17" height="11.8"></rect>
-      <path d="M9.3 21.8v-4.4a2.7 2.7 0 0 1 5.4 0v4.4Z" fill="#fff"></path>
-      <g fill="none" stroke="#fff" stroke-width="1.1">
-        <path d="M12 4.2 14.2 8H9.8Z"></path>
-        <path d="M12 9.6 9.8 5.8h4.4Z"></path>
-      </g>
+      <path d="M12 4.5 18.5 15.75H5.5Z"></path>
+      <path d="M12 19.5 5.5 8.25H18.5Z"></path>
+    </symbol>
+    <symbol id="i-chabad" viewBox="0 0 24 24">
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path>
     </symbol>
     <symbol id="i-kosher" viewBox="0 0 24 24">
       <path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"></path>
@@ -373,8 +371,9 @@
       <h1>See the shuls before you see the house.</h1>
       <p class="lede">You're browsing a listing on Zillow or an Airbnb for Shabbos.
         The map shows you the price and the square footage — but not whether you can
-        <strong>walk to a minyan</strong>. This extension overlays every shul, kosher
-        restaurant, Jewish school, and mikvah onto the map you're already looking at.</p>
+        <strong>walk to a minyan</strong>. This extension overlays every shul, Chabad
+        house, kosher restaurant, Jewish school, and mikvah onto the map you're already
+        looking at.</p>
       <div class="cta-row">
         <a class="btn" href="https://chromewebstore.google.com/detail/nlehebgljnecmjeedmdgjaojehajnknf" target="_blank" rel="noopener">
           <svg class="btn-logo" aria-hidden="true"><use href="#i-logo"></use></svg>Install Extension</a>
@@ -383,7 +382,7 @@
       </div>
     </div>
 
-    <div class="mapcard" role="img" aria-label="Illustration: a street map with colored pins for shuls, kosher food, schools, and a mikvah, next to the extension's results panel">
+    <div class="mapcard" role="img" aria-label="Illustration: a street map with colored pins for shuls, Chabad, kosher food, schools, and a mikvah, next to the extension's results panel">
       <svg class="streets" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <g stroke="var(--street)" stroke-width="6">
           <line x1="0" y1="80" x2="600" y2="60"></line>
@@ -400,15 +399,17 @@
           <line x1="305" y1="0" x2="300" y2="500"></line>
         </g>
       </svg>
-      <span class="pin" style="left:22%; top:33%; color:#b8860b;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
-      <span class="pin" style="left:47%; top:62%; color:#b8860b;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
+      <span class="pin" style="left:22%; top:33%; color:#1e3a8a;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
+      <span class="pin" style="left:47%; top:62%; color:#1e3a8a;" title="Shul"><svg><use href="#i-shul"></use></svg></span>
+      <span class="pin" style="left:28%; top:47%; color:#b8860b;" title="Chabad"><svg><use href="#i-chabad"></use></svg></span>
       <span class="pin" style="left:35%; top:80%; color:#ea580c;" title="Kosher restaurant"><svg><use href="#i-kosher"></use></svg></span>
       <span class="pin" style="left:58%; top:28%; color:#ea580c;" title="Kosher grocery"><svg><use href="#i-kosher"></use></svg></span>
       <span class="pin" style="left:16%; top:64%; color:#059669;" title="Jewish school"><svg><use href="#i-school"></use></svg></span>
       <span class="pin" style="left:64%; top:76%; color:#2196f3;" title="Mikvah"><svg><use href="#i-mikvah"></use></svg></span>
       <div class="minipanel" aria-hidden="true">
         <div class="mp-hdr"><svg class="mp-star"><use href="#i-star"></use></svg> Jewish Community Finder</div>
-        <div class="mp-item"><span class="mp-icon" style="color:#b8860b"><svg><use href="#i-shul"></use></svg></span><div><div class="n">Cong. Ohr Yisroel</div><div class="d">Shul · 0.3 mi</div></div></div>
+        <div class="mp-item"><span class="mp-icon" style="color:#1e3a8a"><svg><use href="#i-shul"></use></svg></span><div><div class="n">Cong. Ohr Yisroel</div><div class="d">Shul · 0.3 mi</div></div></div>
+        <div class="mp-item"><span class="mp-icon" style="color:#b8860b"><svg><use href="#i-chabad"></use></svg></span><div><div class="n">Chabad of the Shore</div><div class="d">Chabad · 0.4 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#ea580c"><svg><use href="#i-kosher"></use></svg></span><div><div class="n">Grill &amp; Glatt</div><div class="d">Kosher food · 0.5 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#059669"><svg><use href="#i-school"></use></svg></span><div><div class="n">Bais Yaakov Elementary</div><div class="d">Jewish school · 0.7 mi</div></div></div>
         <div class="mp-item"><span class="mp-icon" style="color:#2196f3"><svg><use href="#i-mikvah"></use></svg></span><div><div class="n">Community Mikvah</div><div class="d">Mikvah · 0.9 mi</div></div></div>
@@ -419,14 +420,16 @@
   </div>
 
   <section>
-    <h2 class="sec-title">Four things every frum family checks first</h2>
+    <h2 class="sec-title">Five things every frum family checks first</h2>
     <p class="sec-sub">Pan or zoom any supported map and the extension searches that exact
       area, lists everything by distance, and drops color-coded pins on the map itself.
       Hover a pin for a quick card; click for a map preview plus one-tap Navigate,
       Street View, and Open in Google Maps.</p>
     <div class="cats">
-      <div class="cat"><h3><span class="cbadge" style="color:#b8860b"><svg><use href="#i-shul"></use></svg></span>Shuls</h3>
+      <div class="cat"><h3><span class="cbadge" style="color:#1e3a8a"><svg><use href="#i-shul"></use></svg></span>Shuls</h3>
         <p>Every synagogue mapped in the area — click any result to open it in Google Maps.</p></div>
+      <div class="cat"><h3><span class="cbadge" style="color:#b8860b"><svg><use href="#i-chabad"></use></svg></span>Chabad</h3>
+        <p>Chabad houses and centers nearby — a warm place for a minyan, a meal, or a Yom Tov wherever you land.</p></div>
       <div class="cat"><h3><span class="cbadge" style="color:#ea580c"><svg><use href="#i-kosher"></use></svg></span>Kosher food</h3>
         <p>Restaurants, takeout, bakeries, and groceries tagged kosher or carrying a kosher name.</p></div>
       <div class="cat"><h3><span class="cbadge" style="color:#059669"><svg><use href="#i-school"></use></svg></span>Jewish schools</h3>
@@ -482,9 +485,10 @@
     <h2 class="sec-title">Data &amp; privacy</h2>
     <div class="notes">
       <div class="note"><h3>Where the data comes from</h3>
-        <p>Shuls and kosher food come from OpenStreetMap; Jewish schools from the NCES
-          private-school database; mikvahs from the mikvah.org global directory. All free,
-          all built by the community — a place that's missing just isn't listed yet.</p></div>
+        <p>Shuls, Chabad houses, and kosher food come from OpenStreetMap; Jewish schools
+          from the NCES private-school database; mikvahs from the mikvah.org global
+          directory. All free, all built by the community — a place that's missing just
+          isn't listed yet.</p></div>
       <div class="note"><h3>Verify kashrus yourself</h3>
         <p>Map data says nothing about hashgacha. Always confirm certification, minyan times,
           and mikvah hours with the local vaad or the establishment itself.</p></div>
