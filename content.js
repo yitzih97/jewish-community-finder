@@ -318,6 +318,83 @@
     return places;
   }
 
+  // Some places offer more than one service — a shul that also runs a preschool,
+  // a Chabad with its own mikvah. When separate sources map those as distinct
+  // entries that clearly belong to the same institution (very close together +
+  // a shared, distinctive name word), merge them into one place that carries
+  // several category badges. We never invent a service that isn't mapped.
+  const CAT_ORDER = ['chabad', 'shul', 'school', 'mikvah', 'kosher'];
+  const NAME_STOP = new Set([
+    'of', 'the', 'and', 'for', 'at', 'inc', 'center', 'centre', 'jewish',
+    'community', 'congregation', 'cong', 'synagogue', 'shul', 'temple', 'house',
+    'org', 'institute', 'beth', 'bais', 'beis',
+  ]);
+  const GENERIC_TOK = new Set([
+    'chabad', 'lubavitch', 'jewish', 'mikvah', 'mikveh', 'yeshiva', 'yeshivas',
+    'torah', 'academy', 'school', 'preschool', 'day', 'hebrew', 'kosher',
+    'glatt', 'market', 'cafe', 'grill', 'pizza',
+  ]);
+  function distinctiveTokens(name) {
+    return new Set(
+      normName(name).split(' ')
+        .filter((t) => t.length >= 3 && !NAME_STOP.has(t) && !GENERIC_TOK.has(t))
+    );
+  }
+  function shareDistinctive(aTok, bName) {
+    if (!aTok.size) return false;
+    const b = distinctiveTokens(bName);
+    for (const t of aTok) if (b.has(t)) return true;
+    return false;
+  }
+  function mergeGroup(group) {
+    group.sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat));
+    const cats = CAT_ORDER.filter((c) => group.some((g) => g.cats.includes(c)));
+    const pick = (k) => {
+      for (const g of group) if (g[k]) return g[k];
+      return null;
+    };
+    return {
+      ...group[0],
+      cats,
+      cat: cats[0],
+      address: pick('address'),
+      website: pick('website'),
+      phone: pick('phone'),
+      distance: Math.min.apply(null, group.map((g) => g.distance)),
+    };
+  }
+  function clusterServices(places) {
+    for (const p of places) if (!p.cats) p.cats = [p.cat];
+    const used = new Array(places.length).fill(false);
+    const out = [];
+    for (let i = 0; i < places.length; i++) {
+      if (used[i]) continue;
+      used[i] = true;
+      const group = [places[i]];
+      const aTok = distinctiveTokens(places[i].name);
+      for (let j = i + 1; j < places.length; j++) {
+        if (used[j]) continue;
+        const near = haversineMiles(
+          places[i].lat, places[i].lng, places[j].lat, places[j].lng
+        ) < 0.03;
+        if (near && shareDistinctive(aTok, places[j].name)) {
+          group.push(places[j]);
+          used[j] = true;
+        }
+      }
+      out.push(group.length === 1 ? places[i] : mergeGroup(group));
+    }
+    out.sort((a, b) => a.distance - b.distance);
+    return out;
+  }
+
+  // The category whose icon/color a place shows: the first of its services that
+  // is currently enabled (so a Chabad+Mikvah still shows when only Mikvah is on).
+  function displayCat(p) {
+    const cats = p.cats || [p.cat];
+    return cats.find((c) => state.enabled[c]) || cats[0];
+  }
+
   function bboxKey(b) {
     return [b.south, b.west, b.north, b.east]
       .map((v) => v.toFixed(3)).join(',');
@@ -355,6 +432,7 @@
     if (osmOk) places = processElements(osmRes.value.elements, bounds);
     if (mkOk) places = mergeMikvahs(places, mkRes.value.mikvahs, bounds);
     if (schOk) places = mergeSchools(places, schRes.value.schools, bounds);
+    places = clusterServices(places);
 
     if (!osmOk && !mkOk && !schOk) {
       state.error =
@@ -507,6 +585,7 @@
       transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer;
     }
     .pin:hover { transform: translate(-50%, -50%) scale(1.3); z-index: 5; }
+    .pin.multi { box-shadow: 0 0 0 2px #b8860b, 0 2px 8px rgba(0,0,0,.45); }
     .chip svg { vertical-align: -2px; margin-right: 3px; }
     .cicon {
       display: inline-flex; flex: none; width: 22px; height: 22px;
@@ -680,13 +759,15 @@
   function showHoverCard(p, pinEl) {
     if (detailBack.style.display === 'flex') return;
     clearTimeout(hoverHideTimer);
-    const c = CATS[p.cat];
-    const meta = [c.label, `${p.distance.toFixed(1)} mi away`, p.address]
+    const cats = p.cats || [p.cat];
+    const c = CATS[displayCat(p)];
+    const label = cats.map((x) => CATS[x].label).join(' · ');
+    const meta = [label, `${p.distance.toFixed(1)} mi away`, p.address]
       .filter(Boolean).join(' · ');
     hoverCard.innerHTML = `
       <div class="hc-body">
         <div class="hc-name" style="color:${c.color}">
-          <span class="hc-badge">${catSvg(p.cat, 12)}</span>
+          ${catBadges(p, 12)}
           <span style="color:#111827">${esc(p.name)}</span>
         </div>
         <div class="hc-meta">${esc(meta)}</div>
@@ -712,7 +793,9 @@
 
   function openDetail(p) {
     hideHoverCard(0);
-    const c = CATS[p.cat];
+    const cats = p.cats || [p.cat];
+    const c = CATS[displayCat(p)];
+    const catLabel = cats.map((x) => `${CATS[x].emoji} ${CATS[x].label}`).join('  ·  ');
     const rows = [];
     if (p.address) rows.push(detailRow('📍', esc(p.address)));
     rows.push(detailRow('📏', `${p.distance.toFixed(1)} miles from map center`));
@@ -732,10 +815,10 @@
         </div>
         <div class="detail-body">
           <div class="detail-title" style="color:${c.color}">
-            <span class="detail-badge">${catSvg(p.cat, 16)}</span>
+            ${catBadges(p, 16)}
             <span style="color:#111827">${esc(p.name)}</span>
           </div>
-          <div class="detail-cat" style="color:${c.color}">${c.emoji} ${c.label}</div>
+          <div class="detail-cat" style="color:${c.color}">${esc(catLabel)}</div>
           <div class="detail-rows">${rows.join('')}</div>
         </div>
         <div class="detail-actions">
@@ -773,14 +856,27 @@
   }
 
   function visiblePlaces() {
-    return state.places.filter((p) => state.enabled[p.cat]);
+    return state.places.filter((p) =>
+      (p.cats || [p.cat]).some((c) => state.enabled[c])
+    );
+  }
+
+  // Small round category badges for a place — one per service it offers.
+  function catBadges(p, size) {
+    return (p.cats || [p.cat])
+      .map((c) =>
+        `<span class="cicon" style="color:${CATS[c].color}">` +
+        `${catSvg(c, size)}</span>`)
+      .join('');
   }
 
   function renderPanel() {
     if (!state.open) return;
     const counts = {};
     for (const k of Object.keys(CATS)) counts[k] = 0;
-    for (const p of state.places) counts[p.cat]++;
+    for (const p of state.places) {
+      for (const c of (p.cats || [p.cat])) counts[c]++;
+    }
 
     const chips = Object.entries(CATS)
       .map(([key, c]) => {
@@ -806,9 +902,10 @@
     } else {
       body = visiblePlaces()
         .map((p) => {
-          const c = CATS[p.cat];
+          const cats = p.cats || [p.cat];
+          const label = cats.map((c) => CATS[c].label).join(' · ');
           const meta = [
-            c.label,
+            label,
             `${p.distance.toFixed(1)} mi`,
             p.address,
           ].filter(Boolean).join(' · ');
@@ -819,7 +916,7 @@
               : '') +
             (p.phone ? `<a href="tel:${esc(p.phone)}">${esc(p.phone)}</a>` : '');
           return `<div class="item" data-id="${p.id}">
-            <div class="name"><span class="cicon" style="color:${c.color}">${catSvg(p.cat, 13)}</span>${esc(p.name)}</div>
+            <div class="name">${catBadges(p, 13)}${esc(p.name)}</div>
             <div class="meta">${esc(meta)}</div>
             <div class="links">${links}</div>
           </div>`;
@@ -942,12 +1039,13 @@
       if (p.lng < b.west || p.lng > b.east) continue;
       const x = ((p.lng - b.west) / (b.east - b.west)) * 100;
       const y = ((topM - mercN(p.lat)) / spanM) * 100;
+      const dc = displayCat(p);
       const pin = document.createElement('div');
-      pin.className = 'pin';
+      pin.className = 'pin' + ((p.cats || [p.cat]).length > 1 ? ' multi' : '');
       pin.style.left = x + '%';
       pin.style.top = y + '%';
-      pin.style.color = CATS[p.cat].color;
-      pin.innerHTML = catSvg(p.cat, 14);
+      pin.style.color = CATS[dc].color;
+      pin.innerHTML = catSvg(dc, 14);
       pin.addEventListener('mouseenter', () => showHoverCard(p, pin));
       pin.addEventListener('mouseleave', () => hideHoverCard(120));
       pin.addEventListener('click', (e) => {

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.3 — 2026-08-06
+- **Fixed the broken map preview in the detail card.** OpenStreetMap was
+  blocking the extension's tile requests (their usage policy), so the preview
+  showed an "Access blocked" image. Switched to keyless Esri satellite imagery
+  — you now get a real aerial photo of the exact building.
+- **Multi-service places.** When one institution offers several things that are
+  each mapped nearby — e.g. a Chabad that also runs a preschool and a mikvah —
+  they're now merged into a single result showing all its category badges, and
+  it counts under each of those categories. (Only services that are actually in
+  the map data are shown; nothing is invented.)
+- Multi-service pins get a gold ring so they stand out on the map.
+
 ## 1.0.2 — 2026-08-02
 - **New "Chabad" category.** Finds Chabad houses / Chabad centers near you
   (gold home icon). Chabad locations are split out from the Shuls list.

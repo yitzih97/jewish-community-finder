@@ -154,14 +154,15 @@ async function fetchSchools(b) {
   return { schools: out };
 }
 
-// Compose a small map preview (like the thumbnail on a Google Maps place card)
-// by stitching OpenStreetMap tiles onto an OffscreenCanvas and drawing a marker
-// at the exact location. Done in the worker so the host page's CSP can't block
-// the tile requests, and returned as one self-contained data URL.
+// Compose a small aerial preview (like the photo thumbnail on a Google Maps
+// place card) by stitching Esri World Imagery satellite tiles onto an
+// OffscreenCanvas and drawing a marker at the exact location. We use Esri
+// rather than OpenStreetMap tiles because OSM's tile policy blocks extension
+// traffic; Esri imagery is keyless and shows the actual building/roof.
 async function makeStaticMap({ lat, lng, color }) {
-  const zoom = 16;
+  const zoom = 18;
   const w = 304;
-  const h = 150;
+  const h = 160;
   const world = 256 * Math.pow(2, zoom);
   const wx = ((lng + 180) / 360) * world;
   const latRad = (lat * Math.PI) / 180;
@@ -182,8 +183,10 @@ async function makeStaticMap({ lat, lng, color }) {
       if (ty < 0 || ty >= n) continue;
       const wrapX = ((tx % n) + n) % n;
       try {
+        // Esri World Imagery uses z/y/x order and returns JPEG.
         const r = await fetchT(
-          `https://tile.openstreetmap.org/${zoom}/${wrapX}/${ty}.png`,
+          'https://server.arcgisonline.com/ArcGIS/rest/services/' +
+            `World_Imagery/MapServer/tile/${zoom}/${ty}/${wrapX}`,
           {}, 8000
         );
         if (!r.ok) continue;
@@ -205,6 +208,10 @@ async function makeStaticMap({ lat, lng, color }) {
   ctx.arc(cx, cy, 6.5, 0, Math.PI * 2);
   ctx.fillStyle = color || '#e11d48';
   ctx.fill();
+  // Required imagery attribution.
+  ctx.font = '9px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillText('Imagery © Esri', 5, h - 5);
   const blob = await canvas.convertToBlob({ type: 'image/png' });
   const bytes = new Uint8Array(await blob.arrayBuffer());
   let bin = '';
